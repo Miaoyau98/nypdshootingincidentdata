@@ -1,0 +1,51 @@
+---
+title: "NYPD Assignment"
+output: pdf_document
+date: '2022-06-18'
+---
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load-packages, message=TRUE}
+library(tidyverse)
+library(knitr)
+library(tidyr)
+library(lubridate)
+library(dplyr) 
+library(ggplot2)
+library(magrittr)
+```
+
+
+```{r NYPD_Shootings}
+nypdshootings <- read_csv("https://data.cityofnewyork.us/api/views/833y-fsy8/rows.csv?accessType=DOWNLOAD")
+```
+
+
+```{r cleanData, echo=TRUE} 
+library(dplyr) 
+library(ggplot2)
+nypd_data <- drop_na(nypdshootings) %>% select(-c(INCIDENT_KEY, LOCATION_DESC, X_COORD_CD, Y_COORD_CD, Latitude, Longitude, Lon_Lat, JURISDICTION_CODE, OCCUR_TIME)) 
+
+#change the date type 
+nypd_data <- nypd_data %>% mutate(OCCUR_DATE = mdy(OCCUR_DATE))
+
+#change logical boolean into int. 
+nypd_data$STATISTICAL_MURDER_FLAG [nypd_data$STATISTICAL_MURDER_FLAG == "true"] <- 1
+nypd_data$STATISTICAL_MURDER_FLAG [nypd_data$STATISTICAL_MURDER_FLAG == "false"] <- 0
+nypd_data$STATISTICAL_MURDER_FLAG <- as.integer(nypd_data$STATISTICAL_MURDER_FLAG)
+nypd_murder_boro <- nypd_data %>% group_by(BORO)
+
+#Summarising the dataset
+nypd_data %>% 
+  group_by(BORO, OCCUR_DATE,STATISTICAL_MURDER_FLAG) %>% 
+  summarise(nypd_data, STATISTICAL_MURDER_FLAG = sum(STATISTICAL_MURDER_FLAG)) 
+nypd_murder_boro_1 <- nypd_murder_boro %>% group_by(BORO, OCCUR_DATE) %>% 
+  summarize(STATISTICAL_MURDER_FLAG = STATISTICAL_MURDER_FLAG) %>% select(BORO, OCCUR_DATE, STATISTICAL_MURDER_FLAG) %>% ungroup() 
+
+```
+
+
+
